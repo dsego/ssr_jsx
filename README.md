@@ -2,9 +2,9 @@
 
 A simple JSX library for server-side rendering with Deno.
 
-Supports only functional components. Components can be asynchronous.
+Supports only functional components. Asynchronous components are resolved concurrently.
 
-#### Example
+#### Basic example
 ```jsx
 /** @jsx h */
 /** @jsxFrag Fragment */
