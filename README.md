@@ -1,8 +1,10 @@
-## Server-side JSX library
+## Server-side JSX for Deno
 
-A simple JSX library for server-side rendering with functional components. Supports asynchronous components.
+A simple JSX library for server-side rendering with Deno.
 
-### Example
+Supports only functional components. Components can be asynchronous.
+
+#### Example
 ```jsx
 /** @jsx h */
 /** @jsxFrag Fragment */
@@ -13,7 +15,7 @@ const html = await renderJSX(
 );
 ```
 
-### Async component
+#### Async component
 ```jsx
 /** @jsx h */
 /** @jsxFrag Fragment */
@@ -30,7 +32,8 @@ const html = await renderJSX(
   </>
 );
 ```
+---
 
-### TODO
+##### TODO
 - append 'px' to numeric values (except for unitless props)
 - write more tests
