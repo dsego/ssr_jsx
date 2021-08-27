@@ -1,6 +1,6 @@
 ## Server-side JSX library
 
-Simple JSX library for server-side rendering with functional components. Supports asynchronous components.
+A simple JSX library for server-side rendering with functional components. Supports asynchronous components.
 
 ### Example
 ```jsx
