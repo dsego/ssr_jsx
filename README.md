@@ -22,8 +22,8 @@ const html = await renderJSX(
 import { Fragment, h, renderJSX } from "./mod.js";
 
 const Welcome = async function ({userId}) {
-  const user = await findUser(userId)
-  return (<span>Welcome, {user.name}!</span>)
+  const user = await findUser(userId);
+  return (<span>Welcome, {user.name}!</span>);
 }
 
 const html = await renderJSX(
