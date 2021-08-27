@@ -21,7 +21,7 @@ const html = await renderJSX(
 /** @jsxFrag Fragment */
 import { Fragment, h, renderJSX } from "./mod.js";
 
-const Welcome = async function ({userId) {
+const Welcome = async function ({userId}) {
   const user = await findUser(userId)
   return (<span>Welcome, {user.name}!</span>)
 }
