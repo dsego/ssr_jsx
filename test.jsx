@@ -4,11 +4,13 @@
 import { Fragment, h, renderJSX } from "./mod.js";
 import { assertEquals } from "https://deno.land/std@0.106.0/testing/asserts.ts";
 
-
-String.prototype.dedent = function() {
-  const len = this.match(/^\s+/gm).reduce((res, str) => Math.min(str.length, res), 999)
-  return this.replace(new RegExp(`^([ |\\t]{${len}})`, 'gm'), '')
-}
+String.prototype.dedent = function () {
+  const len = this.match(/^\s+/gm).reduce(
+    (res, str) => Math.min(str.length, res),
+    999,
+  );
+  return this.replace(new RegExp(`^([ |\\t]{${len}})`, "gm"), "");
+};
 
 Deno.test("pretty print", async () => {
   const jsx = (
@@ -25,17 +27,17 @@ Deno.test("pretty print", async () => {
   );
   assertEquals(
     await renderJSX(jsx, { pretty: false }),
-    '<aside><a href="#">Link</a><dfn><abbr title="Cascading Style Sheets">CSS</abbr></dfn></aside>'
+    '<aside><a href="#">Link</a><dfn><abbr title="Cascading Style Sheets">CSS</abbr></dfn></aside>',
   );
 
   assertEquals(
-    await renderJSX(jsx, { pretty: true, tab: '  ' }),
+    await renderJSX(jsx, { pretty: true, tab: "  " }),
     `<aside>
       <a href="#">Link</a>
       <dfn>
         <abbr title="Cascading Style Sheets">CSS</abbr>
       </dfn>
-    </aside>`.dedent()
+    </aside>`.dedent(),
   );
 });
 
