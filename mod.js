@@ -22,7 +22,7 @@ function encode(str) {
   return result;
 }
 
-// TODO: add px to numeric values
+// TODO: append px to numeric values
 function css(obj) {
   return Object.entries(obj).map(([p, v]) => `${kebab(p)}: ${v}`).join("; ");
 }
@@ -125,12 +125,17 @@ export async function resolve(node) {
   return node;
 }
 
-// TODO: add to options
-const TAB = "    ";
-
-export function render(node, pad = "") {
+export function render(node, pad = "", options = {}) {
   if (empty(node)) {
     return "";
+  }
+
+  let { tab = "    ", pretty = true } = options;
+  let newline = "\n";
+  if (!pretty) {
+    newline = "";
+    pad = "";
+    tab = "";
   }
 
   if (textual(node)) {
@@ -151,7 +156,7 @@ export function render(node, pad = "") {
 
   if (node.props.dangerouslySetInnerHTML?.__html) {
     block = true;
-    innerHTML = pad + TAB + node.props.dangerouslySetInnerHTML?.__html;
+    innerHTML = pad + tab + node.props.dangerouslySetInnerHTML?.__html;
   } else {
     const children = node.props.children ?? [];
     block = children.length && (
@@ -159,8 +164,10 @@ export function render(node, pad = "") {
       children[0]?.tag ||
       String(children[0] ?? "").length > 40
     );
-    const padpad = node.tag !== Fragment && block ? pad + TAB : "";
-    innerHTML = children.map((child) => render(child, padpad)).join("\n");
+    const padpad = node.tag !== Fragment && block ? pad + tab : "";
+    innerHTML = children.map((child) => render(child, padpad, options)).join(
+      newline,
+    );
   }
 
   if (node.tag === Fragment) {
@@ -168,12 +175,12 @@ export function render(node, pad = "") {
   }
 
   if (block) {
-    innerHTML = `\n${innerHTML}\n${pad}`;
+    innerHTML = `${newline}${innerHTML}${newline}${pad}`;
   }
 
   return pad + `<${node.tag}${attrs(node.props)}>${innerHTML}</${node.tag}>`;
 }
 
-export async function renderJSX(jsx) {
-  return render(await resolve(jsx));
+export async function renderJSX(jsx, options) {
+  return render(await resolve(jsx), "", options);
 }
