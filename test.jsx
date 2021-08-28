@@ -41,7 +41,90 @@ Deno.test("pretty print", async () => {
   );
 });
 
-Deno.test("testing example", async () => {
+Deno.test("textarea has value prop, no children ", async () => {
+  assertEquals(
+    await renderJSX(<textarea value="foo" />),
+    "<textarea>foo</textarea>",
+  );
+});
+
+Deno.test("textarea has value prop & children ", async () => {
+  assertEquals(
+    await renderJSX(<textarea value="foo">bar</textarea>),
+    "<textarea>foo</textarea>",
+  );
+});
+
+Deno.test("textarea with value prop as undefined", async () => {
+  assertEquals(
+    await renderJSX(<textarea value={undefined}>bar</textarea>),
+    "<textarea>bar</textarea>",
+  );
+});
+
+Deno.test("textarea with value prop as null ", async () => {
+  assertEquals(
+    await renderJSX(<textarea value={null}>bar</textarea>),
+    "<textarea>bar</textarea>",
+  );
+});
+
+Deno.test("textarea without value prop, ", async () => {
+  assertEquals(
+    await renderJSX(<textarea>bar</textarea>),
+    "<textarea>bar</textarea>",
+  );
+});
+
+Deno.test("self-closing textarea without value prop", async () => {
+  assertEquals(
+    await renderJSX(<textarea />),
+    "<textarea></textarea>",
+  );
+});
+
+Deno.test("preformatted text", async () => {
+  assertEquals(
+    await renderJSX(
+      <pre>
+        {`
+        foo
+          bar
+      `.dedent()}
+      </pre>,
+    ),
+    `<pre>\n  foo\n    bar\n</pre>`,
+  );
+});
+
+Deno.test("pretty printing doesn't format content of textarea & pre tags", async () => {
+  assertEquals(
+    await renderJSX(
+      <>
+        <p>
+          We can all fight against loneliness by engaging in random acts of
+          kindness.
+        </p>
+        <pre>
+          We can all fight against loneliness by engaging in random acts of
+          kindness.
+        </pre>
+        <textarea>
+          We can all fight against loneliness by engaging in random acts of
+          kindness.
+        </textarea>
+      </>,
+    ),
+    `<p>
+        We can all fight against loneliness by engaging in random acts of kindness.
+    </p>
+    <pre>We can all fight against loneliness by engaging in random acts of kindness.</pre>
+    <textarea>We can all fight against loneliness by engaging in random acts of kindness.</textarea>`
+      .dedent(),
+  );
+});
+
+Deno.test("big example", async () => {
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
   const AsyncElement = async ({ ms, children }) => {
     await delay(ms);

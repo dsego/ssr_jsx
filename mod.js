@@ -7,7 +7,7 @@ export function h(tag, props, ...children) {
 
 export const Fragment = "fragment";
 
-const ENTITIES = {
+const HTML_ENTITIES = {
   "<": "&lt;",
   ">": "&gt;",
   "&": "&amp;",
@@ -17,7 +17,7 @@ const ENTITIES = {
 function encode(str) {
   let result = "";
   for (const char of str) {
-    result += ENTITIES[char] ?? char;
+    result += HTML_ENTITIES[char] ?? char;
   }
   return result;
 }
@@ -34,11 +34,11 @@ function attrs(props) {
   if (style) {
     result += ` style="${css(style)}"`;
   }
-  for (const key in rest) {
-    if (typeof rest[key] === "boolean") {
+  for (const [key, value] of Object.entries(rest)) {
+    if (typeof value === "boolean") {
       result += ` ${key}`;
     } else {
-      result += ` ${key}="${encode(String(rest[key]))}"`;
+      result += ` ${key}="${encode(String(value))}"`;
     }
   }
   return result;
@@ -91,7 +91,7 @@ function textual(node) {
 }
 
 // Run all (async) functions and return a tree of simple object nodes
-export async function resolve(node) {
+async function resolve(node) {
   if (Array.isArray(node)) {
     return (
       await Promise.all(node.map((n) => resolve(n)))
@@ -125,13 +125,19 @@ export async function resolve(node) {
   return node;
 }
 
-export function render(node, pad = "", options = {}) {
+function render(node, pad = "", options = {}) {
   if (empty(node)) {
     return "";
   }
 
-  let { tab = "    ", pretty = true } = options;
+  let {
+    tab = "    ",
+    pretty = true,
+    maxInlineContentWidth = 40,
+  } = options;
+
   let newline = "\n";
+
   if (!pretty) {
     newline = "";
     pad = "";
@@ -146,25 +152,33 @@ export function render(node, pad = "", options = {}) {
     return pad + `<${node.tag}${attrs(node.props)} />`;
   }
 
-  if (node.tag === "textarea" && "value" in node.props) {
-    const { value, ...rest } = node.props;
-    return pad + `<textarea${attrs(rest)}>${value}</textarea>`;
+  // special case to handle <textarea value="foo" />
+  if (node.tag === "textarea") {
+    const { value, children, ...rest } = node.props;
+    // note: we're okay with rendering [object Object] for non-string children
+    return pad + `<textarea${attrs(rest)}>${value ?? children}</textarea>`;
   }
 
   let innerHTML = "";
-  let block = false;
+
+  // draw tag on multiple lines
+  let blockFormat = false;
 
   if (node.props.dangerouslySetInnerHTML?.__html) {
-    block = true;
+    blockFormat = true;
     innerHTML = pad + tab + node.props.dangerouslySetInnerHTML?.__html;
   } else {
     const children = node.props.children ?? [];
-    block = children.length && (
-      children.length > 1 ||
-      children[0]?.tag ||
-      String(children[0] ?? "").length > 40
+    blockFormat = (
+      node.tag !== "pre" &&
+      children.length &&
+      (
+        children.length > 1 ||
+        children[0]?.tag ||
+        String(children[0] ?? "").length > maxInlineContentWidth
+      )
     );
-    const padpad = node.tag !== Fragment && block ? pad + tab : "";
+    const padpad = node.tag !== Fragment && blockFormat ? pad + tab : "";
     innerHTML = children.map((child) => render(child, padpad, options)).join(
       newline,
     );
@@ -174,7 +188,7 @@ export function render(node, pad = "", options = {}) {
     return innerHTML;
   }
 
-  if (block) {
+  if (blockFormat) {
     innerHTML = `${newline}${innerHTML}${newline}${pad}`;
   }
 
