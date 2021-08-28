@@ -130,11 +130,8 @@ function render(node, pad = "", options = {}) {
     return "";
   }
 
-  let {
-    tab = "    ",
-    pretty = true,
-    maxInlineContentWidth = 40,
-  } = options;
+  const { pretty = true, maxInlineContentWidth = 40 } = options;
+  let { tab = "    " } = options;
 
   let newline = "\n";
 
