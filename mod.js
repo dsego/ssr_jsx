@@ -92,36 +92,15 @@ function textual(node) {
 
 // Run all (async) functions and return a tree of simple object nodes
 async function resolve(node) {
-  if (Array.isArray(node)) {
-    return (
-      await Promise.all(node.map((n) => resolve(n)))
+  if (typeof node?.tag === "function") {
+    node = await resolve(await node.tag(node.props));
+    node.props.children = node.props.children[0]; // unwrap array
+  }
+  if (node.props?.children) {
+    node.props.children = await Promise.all(
+      node.props.children?.map((child) => resolve(child)),
     );
   }
-
-  if (typeof node === "object") {
-    if (typeof node?.tag === "function") {
-      const res = await resolve(await node.tag(node.props));
-      const { tag, props: { children, ...rest } } = res;
-      return {
-        tag,
-        props: {
-          ...(res.props.children && { children: res.props.children[0] }), // unwrap children
-          ...rest,
-        },
-      };
-    }
-    const { tag, props: { children, ...rest } } = node;
-    return {
-      tag,
-      props: {
-        children: await Promise.all(
-          node.props.children?.map((child) => resolve(child)),
-        ),
-        ...rest,
-      },
-    };
-  }
-
   return node;
 }
 
