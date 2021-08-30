@@ -49,45 +49,33 @@ function kebab(str) {
   return str.replace(/([A-Z])/g, "-$1").toLowerCase();
 }
 
-function selfClosing(tag) {
-  switch (tag) {
-    case "area":
-    case "base":
-    case "br":
-    case "col":
-    case "embed":
-    case "hr":
-    case "img":
-    case "input":
-    case "link":
-    case "meta":
-    case "param":
-    case "source":
-    case "track":
-    case "wbr":
-      return true;
-  }
-  return false;
+const SELF_CLOSING_TAG = {
+  area: true,
+  base: true,
+  br: true,
+  col: true,
+  embed: true,
+  hr: true,
+  img: true,
+  input: true,
+  link: true,
+  meta: true,
+  param: true,
+  source: true,
+  track: true,
+  wbr: true,
 }
 
-function empty(node) {
-  switch (typeof node) {
-    case "undefined":
-    case "boolean":
-    case "null":
-      return true;
-  }
-  return false;
+const EMPTY = {
+  undefined: true,
+  boolean: true,
+  null: true,
 }
 
-function textual(node) {
-  switch (typeof node) {
-    case "number":
-    case "string":
-    case "bigint":
-      return true;
-  }
-  return false;
+const TEXTUAL = {
+  number: true,
+  string: true,
+  bigint: true,
 }
 
 // Run all (async) functions and return a tree of simple object nodes
@@ -104,15 +92,16 @@ async function resolve(node) {
   return node;
 }
 
-function render(node, pad = "", options = {}) {
-  if (empty(node)) {
-    return "";
-  }
 
-  const { pretty = true, maxInlineContentWidth = 40 } = options;
-  let { tab = "    " } = options;
-
-  let newline = "\n";
+function render(root, pad = "", options = {}) {
+  const {
+    pretty = true,
+    maxInlineContentWidth = 40
+  } = options;
+  let {
+    tab = "    ",
+    newline = "\n"
+  } = options;
 
   if (!pretty) {
     newline = "";
@@ -120,55 +109,116 @@ function render(node, pad = "", options = {}) {
     tab = "";
   }
 
-  if (textual(node)) {
-    return pad + encode(String(node));
-  }
+  const wmap = new WeakMap()
+  const stack = [root]
+  let html = ''
 
-  if (selfClosing(node.tag)) {
-    return pad + `<${node.tag}${attrs(node.props)} />`;
-  }
+  while (stack.length) {
 
-  // special case to handle <textarea value="foo" />
-  if (node.tag === "textarea") {
-    const { value, children, ...rest } = node.props;
-    // note: we're okay with rendering [object Object] for non-string children
-    return pad + `<textarea${attrs(rest)}>${value ?? children}</textarea>`;
-  }
+    const node = stack.pop()
 
-  let innerHTML = "";
+    if (EMPTY[typeof node]) {
+      continue;
+    }
 
-  // draw tag on multiple lines
-  let blockFormat = false;
+    if (TEXTUAL[typeof node]) {
+      html += pad + encode(String(node));
+      continue;
+    }
 
-  if (node.props.dangerouslySetInnerHTML?.__html) {
-    blockFormat = true;
-    innerHTML = pad + tab + node.props.dangerouslySetInnerHTML?.__html;
-  } else {
-    const children = node.props.children ?? [];
-    blockFormat = (
-      node.tag !== "pre" &&
-      children.length &&
-      (
-        children.length > 1 ||
-        children[0]?.tag ||
-        String(children[0] ?? "").length > maxInlineContentWidth
+    if (SELF_CLOSING_TAG[node.tag]) {
+      html += pad + `<${node.tag}${attrs(node.props)} />` + newline;
+      continue;
+    }
+
+    // special case to handle <textarea value="foo" />
+    if (node.tag === "textarea") {
+      const { value, children, ...rest } = node.props;
+      // note: we're okay with rendering [object Object] for non-string children
+      html += pad + `<textarea${attrs(rest)}>${value ?? children}</textarea>` + newline;
+      continue;
+    }
+
+    if (node.tag === Fragment) {
+      let i = node.props.children.length
+      while (i--) stack.push(node.props.children[i])
+      continue;
+    }
+
+    const meta = wmap.get(node)
+
+    // close tag
+    if (meta?.open) {
+      html += `</${node.tag}>`
+      html += newline
+      continue
+    }
+
+
+    if (node.props.dangerouslySetInnerHTML?.__html) {
+      const innerHTML = pad + tab + node.props.dangerouslySetInnerHTML?.__html;
+
+      html += pad + `<${node.tag}${attrs(node.props)}>`;
+      html += `${newline}${innerHTML}${newline}${pad}`
+      html += `</${node.tag}>`+newline
+      continue
+    } else {
+      const {children} = node.props
+
+      const inline = (
+        node.tag === "pre" ||
+        (children.length === 1 && TEXTUAL[typeof children[0]] &&  String(children[0] ?? "").length <= maxInlineContentWidth)
       )
-    );
-    const padpad = node.tag !== Fragment && blockFormat ? pad + tab : "";
-    innerHTML = children.map((child) => render(child, padpad, options)).join(
-      newline,
-    );
+
+      html += pad + `<${node.tag}${attrs(node.props)}>`;
+
+      if (!inline) html += newline
+
+      // push back onto stack and mark as open, so we know we need to close the tag
+      stack.push(node)
+      wmap.set(node, {open: true, inline})
+
+      let i = node.props.children.length
+      while (i--) stack.push(node.props.children[i])
+    }
+
   }
 
-  if (node.tag === Fragment) {
-    return innerHTML;
-  }
+  return html
 
-  if (blockFormat) {
-    innerHTML = `${newline}${innerHTML}${newline}${pad}`;
-  }
 
-  return pad + `<${node.tag}${attrs(node.props)}>${innerHTML}</${node.tag}>`;
+
+
+
+
+
+  // if (node.props.dangerouslySetInnerHTML?.__html) {
+  //   blockFormat = true;
+  //   innerHTML = pad + tab + node.props.dangerouslySetInnerHTML?.__html;
+  // } else {
+  //   const children = node.props.children ?? [];
+  //   blockFormat = (
+  //     node.tag !== "pre" &&
+  //     children.length &&
+  //     (
+  //       children.length > 1 ||
+  //       children[0]?.tag ||
+  //       String(children[0] ?? "").length > maxInlineContentWidth
+  //     )
+  //   );
+  //   const padpad = node.tag !== Fragment && blockFormat ? pad + tab : "";
+  //   innerHTML = children.map((child) => render(child, padpad, options)).join(
+  //     newline,
+  //   );
+  // }
+
+
+
+  // if (blockFormat) {
+  //   innerHTML = `${newline}${innerHTML}${newline}${pad}`;
+  // }
+
+
 }
 
 export async function renderJSX(jsx, options) {
