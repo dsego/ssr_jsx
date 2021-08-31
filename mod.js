@@ -98,11 +98,7 @@ function render(node, pad = "", options) {
     return "";
   }
 
-  const { pretty, maxInlineContentWidth, tab, newline } = options;
-
-  if (!pretty) {
-    pad = "";
-  }
+  const { maxInlineContentWidth, tab, newline } = options;
 
   if (typeof node !== "object") {
     return pad + encode(String(node));
@@ -165,7 +161,6 @@ export async function renderJSX(jsx, options = {}) {
   } = options;
 
   return render(await resolve(jsx), "", {
-    pretty,
     maxInlineContentWidth,
     tab: pretty ? tab : "",
     newline: pretty ? newline : "",
