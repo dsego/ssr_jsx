@@ -138,6 +138,17 @@ Deno.test("html entities", async () => {
   );
 });
 
+Deno.test("pretty options", async () => {
+  assertEquals(
+    await renderJSX(<aside>Nobody got a guided tour</aside>, {
+      maxInlineContentWidth: 10,
+      tab: "\t",
+      newline: "\n\n",
+    }),
+    `<aside>\n\n\tNobody got a guided tour\n\n</aside>`,
+  );
+});
+
 Deno.test("big example", async () => {
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
   const AsyncElement = async ({ ms, children }) => {

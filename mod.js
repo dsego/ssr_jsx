@@ -93,25 +93,15 @@ async function resolve(node) {
   return node;
 }
 
-function render(node, pad = "", options = {}) {
+function render(node, pad = "", options) {
   if (empty(node)) {
     return "";
   }
 
-  const {
-    pretty = true,
-    maxInlineContentWidth = 40,
-  } = options;
-
-  let {
-    tab = "    ",
-    newline = "\n",
-  } = options;
+  const { pretty, maxInlineContentWidth, tab, newline } = options;
 
   if (!pretty) {
-    newline = "";
     pad = "";
-    tab = "";
   }
 
   if (typeof node !== "object") {
@@ -165,6 +155,19 @@ function render(node, pad = "", options = {}) {
   return pad + `<${node.tag}${attrs(node.props)}>${innerHTML}</${node.tag}>`;
 }
 
-export async function renderJSX(jsx, options) {
-  return render(await resolve(jsx), "", options);
+export async function renderJSX(jsx, options = {}) {
+  // options with defaults
+  const {
+    pretty = true,
+    maxInlineContentWidth = 40,
+    tab = "    ",
+    newline = "\n",
+  } = options;
+
+  return render(await resolve(jsx), "", {
+    pretty,
+    maxInlineContentWidth,
+    tab: pretty ? tab : "",
+    newline: pretty ? newline : "",
+  });
 }
