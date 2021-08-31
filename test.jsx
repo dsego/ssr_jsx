@@ -124,6 +124,20 @@ Deno.test("pretty printing doesn't format content of textarea & pre tags", async
   );
 });
 
+Deno.test("href values", async () => {
+  assertEquals(
+    await renderJSX(<a id={'"'} href="http://example.com?foo=bar&baz">bar</a>),
+    `<a id="&quot;" href="http://example.com?foo=bar&baz">bar</a>`,
+  );
+});
+
+Deno.test("html entities", async () => {
+  assertEquals(
+    await renderJSX(<>{'<&">'}</>),
+    `&lt;&amp;&quot;&gt;`,
+  );
+});
+
 Deno.test("big example", async () => {
   const delay = (ms) => new Promise((res) => setTimeout(res, ms));
   const AsyncElement = async ({ ms, children }) => {

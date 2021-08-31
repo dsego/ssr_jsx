@@ -15,11 +15,7 @@ const HTML_ENTITIES = {
 };
 
 function encode(str) {
-  let result = "";
-  for (const char of str) {
-    result += HTML_ENTITIES[char] ?? char;
-  }
-  return result;
+  return str.replace(/[<>&"]/g, (char) => HTML_ENTITIES[char]);
 }
 
 // TODO: append px to numeric values
@@ -29,19 +25,21 @@ function css(obj) {
 
 // render HTML attributes
 function attrs(props) {
-  let result = "";
-  const { style, children, dangerouslySetInnerHTML, ...rest } = props;
-  if (style) {
-    result += ` style="${css(style)}"`;
-  }
-  for (const [key, value] of Object.entries(rest)) {
-    if (typeof value === "boolean") {
-      result += ` ${key}`;
-    } else {
-      result += ` ${key}="${encode(String(value))}"`;
+  return Object.entries(props).map(([key, value]) => {
+    switch (key) {
+      case "dangerouslySetInnerHTML":
+      case "children":
+        return "";
+      case "style":
+        return ` style="${css(value)}"`;
+      default:
+        if (value === true) {
+          return ` ${key}`;
+        } else {
+          return ` ${key}="${String(value).replace('"', "&quot;")}"`;
+        }
     }
-  }
-  return result;
+  }).join("");
 }
 
 // convert camelCase to kebab-case
@@ -71,20 +69,11 @@ function selfClosing(tag) {
 }
 
 function empty(node) {
-  switch (typeof node) {
-    case "undefined":
-    case "boolean":
-    case "null":
-      return true;
-  }
-  return false;
-}
-
-function textual(node) {
-  switch (typeof node) {
-    case "number":
-    case "string":
-    case "bigint":
+  switch (node) {
+    case undefined:
+    case null:
+    case true:
+    case false:
       return true;
   }
   return false;
@@ -109,10 +98,15 @@ function render(node, pad = "", options = {}) {
     return "";
   }
 
-  const { pretty = true, maxInlineContentWidth = 40 } = options;
-  let { tab = "    " } = options;
+  const {
+    pretty = true,
+    maxInlineContentWidth = 40,
+  } = options;
 
-  let newline = "\n";
+  let {
+    tab = "    ",
+    newline = "\n",
+  } = options;
 
   if (!pretty) {
     newline = "";
@@ -120,7 +114,7 @@ function render(node, pad = "", options = {}) {
     tab = "";
   }
 
-  if (textual(node)) {
+  if (typeof node !== "object") {
     return pad + encode(String(node));
   }
 
