@@ -239,3 +239,31 @@ Deno.test("big example", async () => {
   const html = await renderJSX(jsx);
   assertEquals(html, expected);
 });
+
+Deno.test("jsx component with children", async () => {
+  const Form = ({ name }) => (
+    <form>
+      <button type="submit">
+        Click me, {name}!
+      </button>
+    </form>
+  );
+
+  assertEquals(
+    await renderJSX(<Form name="Le Foo" />),
+    `<form>
+        <button type="submit">Click me, Le Foo!</button>
+    </form>`.dedent(),
+  );
+});
+
+Deno.test("nested jsx children", async () => {
+  const Foo = ({ children }) => <>{children}</>;
+  const Bar = ({ children }) => <Foo>{children}</Foo>;
+  const Baz = ({ children }) => <Bar>{children}</Bar>;
+
+  assertEquals(
+    await renderJSX(<Baz>Le Foo</Baz>),
+    `Le Foo`,
+  );
+});

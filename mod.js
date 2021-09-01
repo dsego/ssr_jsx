@@ -1,7 +1,7 @@
 export function h(tag, props, ...children) {
   return {
     tag,
-    props: { ...props, children },
+    props: { ...props, children: children.flat() },
   };
 }
 
@@ -24,7 +24,7 @@ function css(obj) {
 }
 
 // render HTML attributes
-function attrs(props) {
+function attrs(props = {}) {
   return Object.entries(props).map(([key, value]) => {
     switch (key) {
       case "dangerouslySetInnerHTML":
@@ -83,7 +83,6 @@ function empty(node) {
 async function resolve(node) {
   if (typeof node?.tag === "function") {
     node = await resolve(await node.tag(node.props));
-    node.props.children = node.props.children[0]; // unwrap array
   }
   if (node.props?.children) {
     node.props.children = await Promise.all(
@@ -120,24 +119,27 @@ function render(node, pad = "", options) {
   // draw tag on multiple lines
   let blockFormat = false;
 
-  if (node.props.dangerouslySetInnerHTML?.__html) {
+  if (node.props?.dangerouslySetInnerHTML?.__html) {
     blockFormat = true;
     innerHTML = pad + tab + node.props.dangerouslySetInnerHTML?.__html;
   } else {
-    const children = node.props.children ?? [];
-    blockFormat = (
-      node.tag !== "pre" &&
-      children.length &&
-      (
-        children.length > 1 ||
-        children[0]?.tag ||
-        String(children[0] ?? "").length > maxInlineContentWidth
-      )
-    );
-    const padpad = node.tag !== Fragment && blockFormat ? pad + tab : "";
-    innerHTML = children.map((child) => render(child, padpad, options)).join(
-      newline,
-    );
+    const children = node.props?.children ?? [];
+
+    // only text
+    if (children.every((child) => typeof child !== "object")) {
+      innerHTML = encode(children.join(""));
+      blockFormat = node.tag !== "pre" &&
+        innerHTML.length > maxInlineContentWidth;
+      if (blockFormat) {
+        innerHTML = pad + tab + innerHTML;
+      }
+    } else {
+      blockFormat = node.tag !== "pre";
+      const padpad = node.tag !== Fragment && blockFormat ? pad + tab : "";
+      innerHTML = children.map((child) => render(child, padpad, options)).join(
+        newline,
+      );
+    }
   }
 
   if (node.tag === Fragment) {
