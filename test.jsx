@@ -4,13 +4,16 @@
 import { Fragment, h, renderJSX } from "./mod.js";
 import { assertEquals } from "https://deno.land/std@0.106.0/testing/asserts.ts";
 
-String.prototype.dedent = function () {
-  const len = this.match(/^\s+/gm).reduce(
+function dedent(strings, ...params) {
+  const str = strings.reduce((prev, string, i) =>
+    prev + string + (params[i] ?? "")
+  );
+  const len = str.match(/^\s+/gm)?.reduce(
     (res, str) => Math.min(str.length, res),
     999,
-  );
-  return this.replace(new RegExp(`^([ |\\t]{${len}})`, "gm"), "");
-};
+  ) || 0;
+  return str.replace(new RegExp(`^([ |\\t]{${len}})`, "gm"), "");
+}
 
 Deno.test("pretty print", async () => {
   const jsx = (
@@ -32,12 +35,12 @@ Deno.test("pretty print", async () => {
 
   assertEquals(
     await renderJSX(jsx, { pretty: true, tab: "  " }),
-    `<aside>
+    dedent`<aside>
       <a href="#">Link</a>
       <dfn>
         <abbr title="Cascading Style Sheets">CSS</abbr>
       </dfn>
-    </aside>`.dedent(),
+    </aside>`,
   );
 });
 
@@ -87,10 +90,10 @@ Deno.test("preformatted text", async () => {
   assertEquals(
     await renderJSX(
       <pre>
-        {`
+        {dedent`
         foo
           bar
-      `.dedent()}
+      `}
       </pre>,
     ),
     `<pre>\n  foo\n    bar\n</pre>`,
@@ -115,12 +118,11 @@ Deno.test("pretty printing doesn't format content of textarea & pre tags", async
         </textarea>
       </>,
     ),
-    `<p>
+    dedent`<p>
         We can all fight against loneliness by engaging in random acts of kindness.
     </p>
     <pre>We can all fight against loneliness by engaging in random acts of kindness.</pre>
-    <textarea>We can all fight against loneliness by engaging in random acts of kindness.</textarea>`
-      .dedent(),
+    <textarea>We can all fight against loneliness by engaging in random acts of kindness.</textarea>`,
   );
 });
 
@@ -199,7 +201,7 @@ Deno.test("big example", async () => {
   );
 
   const expected = (
-    `<header style="margin-bottom: 0px; color: #333">
+    dedent`<header style="margin-bottom: 0px; color: #333">
         <h1>Hello World 😎</h1>
     </header>
     <hr />
@@ -234,7 +236,7 @@ Deno.test("big example", async () => {
         We're all in this alone. 😱
         <small>We're all in this alone.</small>
     </footer>`
-  ).dedent();
+  );
 
   const html = await renderJSX(jsx);
   assertEquals(html, expected);
@@ -251,9 +253,9 @@ Deno.test("jsx component with children", async () => {
 
   assertEquals(
     await renderJSX(<Form name="Le Foo" />),
-    `<form>
+    dedent`<form>
         <button type="submit">Click me, Le Foo!</button>
-    </form>`.dedent(),
+    </form>`,
   );
 });
 
@@ -265,5 +267,12 @@ Deno.test("nested jsx children", async () => {
   assertEquals(
     await renderJSX(<Baz>Le Foo</Baz>),
     `Le Foo`,
+  );
+});
+
+Deno.test("handles style dimensions", async () => {
+  assertEquals(
+    await renderJSX(<h1 style={{ margin: 10, padding: '2rem', zIndex: 2 }}>Le Foo</h1>),
+    `<h1 style="margin: 10px; padding: 2rem; z-index: 2">Le Foo</h1>`,
   );
 });

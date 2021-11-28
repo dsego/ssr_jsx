@@ -40,6 +40,6 @@ const html = await renderJSX(
 
 ##### TODO
 
-- append 'px' to numeric values (except for unitless props)
 - write more tests
 - stream output?
+- typescript?

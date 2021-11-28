@@ -18,9 +18,60 @@ function encode(str) {
   return str.replace(/[<>&"]/g, (char) => HTML_ENTITIES[char]);
 }
 
-// TODO: append px to numeric values
+// https://stackoverflow.com/a/45392255/156372
+function unitless(prop) {
+  switch (prop.toLowerCase()) {
+    case "area":
+    case "animationiterationcount":
+    case "borderimageslice":
+    case "borderimagewidth":
+    case "columncount":
+    case "counterincrement":
+    case "counterreset":
+    case "flex":
+    case "flexgrow":
+    case "flexshrink":
+    case "fontsizeadjust":
+    case "fontweight":
+    case "lineheight":
+    case "navindex":
+    case "opacity":
+    case "order":
+    case "orphans":
+    case "tabsize":
+    case "widows":
+    case "zindex":
+    case "pitchrange":
+    case "richness":
+    case "speechrate":
+    case "stress":
+    case "volume":
+    case "floodopacity":
+    case "maskboxoutset":
+    case "maskborderoutset":
+    case "maskboxwidth":
+    case "maskborderwidth":
+    case "shapeimagethreshold":
+      return true;
+  }
+  return false;
+}
+
+// append 'px' to numeric values (except for unitless props)
+function dimension(prop, value) {
+  if (
+    typeof value === "number" && Number.isFinite(value) && !unitless(prop) &&
+    value !== 0
+  ) {
+    return `${value}px`;
+  }
+  return value;
+}
+
 function css(obj) {
-  return Object.entries(obj).map(([p, v]) => `${kebab(p)}: ${v}`).join("; ");
+  return Object.entries(obj).map(([prop, val]) => (
+    `${kebab(prop)}: ${dimension(prop, val)}`
+  )).join("; ");
 }
 
 // render HTML attributes
