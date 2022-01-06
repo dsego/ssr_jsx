@@ -35,7 +35,8 @@ Deno.test("pretty print", async () => {
 
   assertEquals(
     await renderJSX(jsx, { pretty: true, tab: "  " }),
-    dedent`<aside>
+    dedent
+    `<aside>
       <a href="#">Link</a>
       <dfn>
         <abbr title="Cascading Style Sheets">CSS</abbr>
@@ -90,7 +91,8 @@ Deno.test("preformatted text", async () => {
   assertEquals(
     await renderJSX(
       <pre>
-        {dedent`
+        {dedent
+          `
         foo
           bar
       `}
@@ -118,7 +120,8 @@ Deno.test("pretty printing doesn't format content of textarea & pre tags", async
         </textarea>
       </>,
     ),
-    dedent`<p>
+    dedent
+    `<p>
         We can all fight against loneliness by engaging in random acts of kindness.
     </p>
     <pre>We can all fight against loneliness by engaging in random acts of kindness.</pre>
@@ -201,7 +204,8 @@ Deno.test("big example", async () => {
   );
 
   const expected = (
-    dedent`<header style="margin-bottom: 0px; color: #333">
+    dedent
+    `<header style="margin-bottom: 0px; color: #333">
         <h1>Hello World 😎</h1>
     </header>
     <hr />
@@ -253,7 +257,8 @@ Deno.test("jsx component with children", async () => {
 
   assertEquals(
     await renderJSX(<Form name="Le Foo" />),
-    dedent`<form>
+    dedent
+    `<form>
         <button type="submit">Click me, Le Foo!</button>
     </form>`,
   );
@@ -272,7 +277,23 @@ Deno.test("nested jsx children", async () => {
 
 Deno.test("handles style dimensions", async () => {
   assertEquals(
-    await renderJSX(<h1 style={{ margin: 10, padding: '2rem', zIndex: 2 }}>Le Foo</h1>),
+    await renderJSX(
+      <h1 style={{ margin: 10, padding: "2rem", zIndex: 2 }}>Le Foo</h1>,
+    ),
     `<h1 style="margin: 10px; padding: 2rem; z-index: 2">Le Foo</h1>`,
+  );
+});
+
+Deno.test("rest parameters", async () => {
+  const LoginWidget = (_props, login) => `Welcome, ${login.username}`;
+  assertEquals(
+    await renderJSX(
+      <div>
+        <LoginWidget />
+      </div>,
+      null,
+      { username: "bobross" },
+    ),
+    `<div>Welcome, bobross</div>`,
   );
 });

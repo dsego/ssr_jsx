@@ -131,13 +131,13 @@ function empty(node) {
 }
 
 // Run all (async) functions and return a tree of simple object nodes
-async function resolve(node) {
+async function resolve(node, ...rest) {
   if (typeof node?.tag === "function") {
-    node = await resolve(await node.tag(node.props));
+    node = await resolve(await node.tag(node.props, ...rest));
   }
   if (node.props?.children) {
     node.props.children = await Promise.all(
-      node.props.children?.map((child) => resolve(child)),
+      node.props.children?.map((child) => resolve(child, ...rest)),
     );
   }
   return node;
@@ -204,16 +204,16 @@ function render(node, pad = "", options) {
   return pad + `<${node.tag}${attrs(node.props)}>${innerHTML}</${node.tag}>`;
 }
 
-export async function renderJSX(jsx, options = {}) {
+export async function renderJSX(jsx, options = {}, ...rest) {
   // options with defaults
   const {
     pretty = true,
     maxInlineContentWidth = 40,
     tab = "    ",
     newline = "\n",
-  } = options;
+  } = options || {};
 
-  return render(await resolve(jsx), "", {
+  return render(await resolve(jsx, ...rest), "", {
     maxInlineContentWidth,
     tab: pretty ? tab : "",
     newline: pretty ? newline : "",

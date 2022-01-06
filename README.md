@@ -20,10 +20,6 @@ const html = await renderJSX(
 #### Async component
 
 ```jsx
-/** @jsx h */
-/** @jsxFrag Fragment */
-import { Fragment, h, renderJSX } from "./mod.js";
-
 const Welcome = async function ({ userId }) {
   const user = await findUser(userId);
   return <span>Welcome, {user.name}!</span>;
@@ -36,7 +32,26 @@ const html = await renderJSX(
 );
 ```
 
+#### Optional parameters
+
+Additional parameters are passed down to components.
+
+```jsx
+const MyComponent = async function (props, context) {
+  return <p>{context.foo}</p>
+};
+
+const html = await renderJSX(
+  <div>
+    <MyComponent />
+  </div>,
+  null,
+  { foo }
+);
+```
+
 ---
+
 
 ##### TODO
 
