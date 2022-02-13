@@ -130,17 +130,37 @@ function empty(node) {
   return false;
 }
 
-// Run all (async) functions and return a tree of simple object nodes
-async function resolve(node) {
-  if (typeof node?.tag === "function") {
-    node = await resolve(await node.tag(node.props));
-  }
-  if (node.props?.children) {
-    node.props.children = await Promise.all(
-      node.props.children?.map((child) => resolve(child)),
-    );
-  }
-  return node;
+// Run all (async) functions and return a tree of simple object nodes.
+// If a targetElementId is provided, only return the target node.
+async function resolve(node, targetElementId = null) {
+  let target = null;
+
+  const _resolve = async (n, isSubtree = false) => {
+    // already found the target element somewhere else
+    //  - exit unless we're in the target's sub-tree
+    if (target && !isSubtree) return null;
+
+    // searching for the target element, mark it if found
+    if (targetElementId && targetElementId === n.props?.id) {
+      target = n;
+      isSubtree = true;
+    }
+
+    if (typeof n?.tag === "function") {
+      n = await _resolve(await n.tag(n.props), isSubtree);
+    }
+
+    // recursively traverse and resolve all children of this node
+    if (n.props?.children) {
+      n.props.children = await Promise.all(
+        n.props.children?.map((child) => _resolve(child, isSubtree)),
+      );
+    }
+    return n;
+  };
+
+  const root = await _resolve(node);
+  return target ?? root;
 }
 
 function render(node, pad = "", options) {
@@ -211,9 +231,12 @@ export async function renderJSX(jsx, options = {}) {
     maxInlineContentWidth = 40,
     tab = "    ",
     newline = "\n",
+    targetElementId = null,
   } = options;
 
-  return render(await resolve(jsx), "", {
+  const node = await resolve(jsx, targetElementId);
+
+  return render(node, "", {
     maxInlineContentWidth,
     tab: pretty ? tab : "",
     newline: pretty ? newline : "",

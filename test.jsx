@@ -12,7 +12,10 @@ function dedent(strings, ...params) {
     (res, str) => Math.min(str.length, res),
     999,
   ) || 0;
-  return str.replace(new RegExp(`^([ |\\t]{${len}})`, "gm"), "");
+  return str
+    .replace(/^\n/, "")
+    .replace(/\n\s*$/, "")
+    .replace(new RegExp(`^([ |\\t]{${len}})`, "gm"), "");
 }
 
 Deno.test("pretty print", async () => {
@@ -96,7 +99,7 @@ Deno.test("preformatted text", async () => {
       `}
       </pre>,
     ),
-    `<pre>\n  foo\n    bar\n</pre>`,
+    `<pre>  foo\n    bar</pre>`,
   );
 });
 
@@ -272,7 +275,50 @@ Deno.test("nested jsx children", async () => {
 
 Deno.test("handles style dimensions", async () => {
   assertEquals(
-    await renderJSX(<h1 style={{ margin: 10, padding: '2rem', zIndex: 2 }}>Le Foo</h1>),
+    await renderJSX(
+      <h1 style={{ margin: 10, padding: "2rem", zIndex: 2 }}>Le Foo</h1>,
+    ),
     `<h1 style="margin: 10px; padding: 2rem; z-index: 2">Le Foo</h1>`,
   );
+});
+
+Deno.test("returns target element", async () => {
+  const SearchForm = ({ id }) => (
+    <form id={id}>
+      <label for="site-search">Search the site:</label>
+      <input
+        type="search"
+        id="site-search"
+        name="q"
+        aria-label="Search through site content"
+      />
+      <button>Search</button>
+    </form>
+  );
+  const MainNav = () => (
+    <nav>
+      <SearchForm id="search-form" />
+    </nav>
+  );
+  const Page = () => (
+    <main>
+      <MainNav />
+      <article id="article-1" class="tech-news">
+        <h2>Example</h2>
+        <p>Test test test</p>
+      </article>
+      <article id="article-2" class="tech-news">
+        <h2>Example</h2>
+        <p>Test test test</p>
+      </article>
+    </main>
+  );
+  const expected = dedent`
+    <form id="search-form">
+        <label for="site-search">Search the site:</label>
+        <input type="search" id="site-search" name="q" aria-label="Search through site content" />
+        <button>Search</button>
+    </form>`;
+  const result = await renderJSX(<Page />, { targetElementId: "search-form" });
+  assertEquals(expected, result);
 });
