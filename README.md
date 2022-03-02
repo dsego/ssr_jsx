@@ -1,4 +1,4 @@
-## Server-side JSX for Deno
+## ⚛️ Server-side JSX for Deno
 
 A simple JSX library for server-side rendering with Deno.
 
