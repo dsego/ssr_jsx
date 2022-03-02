@@ -1,7 +1,10 @@
 export function h(tag, props, ...children) {
   return {
     tag,
-    props: { ...props, children: children.flat() },
+    props: {
+      ...props,
+      children: children.flat()
+    },
   };
 }
 
@@ -141,7 +144,7 @@ async function resolve(node, targetElementId = null) {
     if (target && !isSubtree) return null;
 
     // searching for the target element, mark it if found
-    if (targetElementId && targetElementId === n.props?.id) {
+    if (targetElementId && targetElementId === n?.props?.id) {
       target = n;
       isSubtree = true;
     }
@@ -151,7 +154,7 @@ async function resolve(node, targetElementId = null) {
     }
 
     // recursively traverse and resolve all children of this node
-    if (n.props?.children) {
+    if (n?.props?.children) {
       n.props.children = await Promise.all(
         n.props.children?.map((child) => _resolve(child, isSubtree)),
       );
