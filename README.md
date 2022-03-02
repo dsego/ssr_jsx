@@ -46,3 +46,4 @@ const partial = await renderJSX(<Page />, { targetElementId: "search-form" });
 - write more tests
 - stream output?
 - typescript?
+- memoize components
