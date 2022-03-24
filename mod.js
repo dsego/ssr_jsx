@@ -3,7 +3,7 @@ export function h(tag, props, ...children) {
     tag,
     props: {
       ...props,
-      children: children.flat()
+      children: children.flat(),
     },
   };
 }
@@ -77,6 +77,40 @@ function css(obj) {
   )).join("; ");
 }
 
+// https://meiert.com/en/blog/boolean-attributes-of-html/
+function isBooleanAttr(attr) {
+  switch (attr) {
+    case "allowfullscreen":
+    case "allowpaymentrequest":
+    case "async":
+    case "autofocus":
+    case "autoplay":
+    case "checked":
+    case "controls":
+    case "default":
+    case "defer":
+    case "disabled":
+    case "formnovalidate":
+    case "hidden":
+    case "ismap":
+    case "itemscope":
+    case "loop":
+    case "multiple":
+    case "muted":
+    case "nomodule":
+    case "novalidate":
+    case "open":
+    case "playsinline":
+    case "readonly":
+    case "required":
+    case "reversed":
+    case "selected":
+    case "truespeed":
+      return true;
+  }
+  return false;
+}
+
 // render HTML attributes
 function attrs(props = {}) {
   return Object.entries(props).map(([key, value]) => {
@@ -87,8 +121,8 @@ function attrs(props = {}) {
       case "style":
         return ` style="${css(value)}"`;
       default:
-        if (value === true) {
-          return ` ${key}`;
+        if (isBooleanAttr(key)) {
+          return value ? ` ${key}` : "";
         } else {
           return ` ${key}="${String(value).replace('"', "&quot;")}"`;
         }

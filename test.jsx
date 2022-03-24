@@ -322,3 +322,22 @@ Deno.test("returns target element", async () => {
   const result = await renderJSX(<Page />, { targetElementId: "search-form" });
   assertEquals(expected, result);
 });
+
+Deno.test("boolean attributes", async () => {
+  assertEquals(
+    await renderJSX(<input hidden />),
+    `<input hidden />`,
+  );
+  assertEquals(
+    await renderJSX(<input disabled="disabled" />),
+    `<input disabled />`,
+  );
+  assertEquals(
+    await renderJSX(<input checked={false} disabled={true} />),
+    `<input disabled />`,
+  );
+  assertEquals(
+    await renderJSX(<input checked disabled={false} />),
+    `<input checked />`,
+  );
+});
