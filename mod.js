@@ -123,8 +123,10 @@ function attrs(props = {}) {
       default:
         if (isBooleanAttr(key)) {
           return value ? ` ${key}` : "";
-        } else {
+        } else if (value !== undefined) {
           return ` ${key}="${String(value).replace('"', "&quot;")}"`;
+        } else {
+          return "";
         }
     }
   }).join("");

@@ -341,3 +341,14 @@ Deno.test("boolean attributes", async () => {
     `<input checked />`,
   );
 });
+
+Deno.test("undefined attributes", async () => {
+  assertEquals(
+    await renderJSX(<p class={undefined} />),
+    `<p></p>`,
+  );
+  assertEquals(
+    await renderJSX(<img alt={undefined} />),
+    `<img />`,
+  );
+});
